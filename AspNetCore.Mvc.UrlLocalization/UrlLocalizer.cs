@@ -16,16 +16,16 @@ namespace AspNetCore.Mvc.UrlLocalization
     public class UrlLocalizer : IUrlLocalizer
     {
         private readonly IStringLocalizer _localizer;
-        private readonly UrlLocalizerOptions _urlLocalizerOptions;
-        private readonly RouteOptions _routeOptions;
+        private readonly IOptions<UrlLocalizerOptions> _urlLocalizerOptions;
+        private readonly IOptions<RouteOptions> _routeOptions;
         public UrlLocalizer(IStringLocalizerFactory stringLocalizerFactory, IOptions<UrlLocalizerOptions> urlLocalizerOptions, IOptions<RouteOptions> routeOptions)
         {
             _localizer = stringLocalizerFactory.Create(urlLocalizerOptions.Value.ResourceName, Assembly.GetEntryAssembly().GetName().Name);
-            _urlLocalizerOptions = urlLocalizerOptions.Value;
-            _routeOptions = routeOptions.Value;
+            _urlLocalizerOptions = urlLocalizerOptions;
+            _routeOptions = routeOptions;
         }
 
-        public UrlLocalizer(IStringLocalizer stringLocalizer, UrlLocalizerOptions urlLocalizerOptions, RouteOptions routeOptions)
+        public UrlLocalizer(IStringLocalizer stringLocalizer, IOptions<UrlLocalizerOptions> urlLocalizerOptions, IOptions<RouteOptions> routeOptions)
         {
             _localizer = stringLocalizer;
             _urlLocalizerOptions = urlLocalizerOptions;
@@ -40,10 +40,6 @@ namespace AspNetCore.Mvc.UrlLocalization
         public IEnumerable<LocalizedString> GetAllStrings(bool includeParentCultures)
         {
             return _localizer.GetAllStrings(includeParentCultures);
-        }
-        public IStringLocalizer WithCulture(CultureInfo culture)
-        {
-            return new UrlLocalizer(_localizer.WithCulture(culture), _urlLocalizerOptions,  _routeOptions);
         }
 
         public string LocalizeLink(string path)
@@ -110,7 +106,7 @@ namespace AspNetCore.Mvc.UrlLocalization
 
                 var translatedPathSegment = reverseLookup.ContainsKey(pathSegment) ? reverseLookup[pathSegment] : reverseLookup.ContainsKey(ti.ToTitleCase(pathSegment)) ? reverseLookup[ti.ToTitleCase(pathSegment)] : pathSegment;
 
-                if (_routeOptions.LowercaseUrls)
+                if (_routeOptions.Value.LowercaseUrls)
                     translatedPathSegment = translatedPathSegment.ToLowerInvariant();
 
                 builder.Append(translatedPathSegment);
